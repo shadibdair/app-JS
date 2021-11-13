@@ -1,7 +1,7 @@
 # Build image
 FROM node:14-alpine
-COPY . /bootcamp-app
-WORKDIR /bootcamp-app
+COPY . /app-javascript
+WORKDIR /app-javascript
 EXPOSE 8080
 # dependencies
 RUN npm install
