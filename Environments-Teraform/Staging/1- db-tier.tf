@@ -81,21 +81,21 @@ resource "azurerm_network_security_rule" "db_nsg_rule_inbound" {
   network_security_group_name = azurerm_network_security_group.db_subnet_nsg.name
 }
 
-# ## NSG Outbound Rule for DBTier Subnets
-# resource "azurerm_network_security_rule" "db_nsg_rule_outbound" {
-#   for_each = local.db_inbound_ports_map
-#   name                        = "DenyInternet"
-#   priority                    = "1000"
-#   direction                   = "Outbound"
-#   access                      = "Deny"
-#   protocol                    = "*"
-#   source_port_range           = "*"
-#   destination_port_range      = "*" 
-#   source_address_prefix       = "*"
-#   destination_address_prefix  = "*"
-#   resource_group_name         = azurerm_resource_group.rg.name
-#   network_security_group_name = azurerm_network_security_group.db_subnet_nsg.name
-# }
+## NSG Outbound Rule for DBTier Subnets
+resource "azurerm_network_security_rule" "db_nsg_rule_outbound" {
+  for_each = local.db_inbound_ports_map
+  name                        = "DenyInternet"
+  priority                    = "1000"
+  direction                   = "Outbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*" 
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.db_subnet_nsg.name
+}
 
 #--------------------------------------------------------
 
