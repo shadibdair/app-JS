@@ -76,36 +76,36 @@ stages:
 
 
 
-# # # CD prod
-# - stage: DeployToProduction
-#   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
-#   jobs:
-#   - deployment: production
-#     displayName: Deploy to Production
-#     environment:
-#       name: Production
-#       resourceType: VirtualMachine
-#     strategy:
-#       runOnce:
-#         deploy:
-#           steps:
-#           - task: CmdLine@2
-#             displayName: Stop Current Container
-#             inputs:
-#               script: 'docker rm -f  bootapp || true'
-#           - task: Docker@2
-#             displayName: 'Login to Registry'
-#             inputs:
-#               containerRegistry: $(dockerRegistryServiceConnection)
-#               command: 'login'
+ # CD prod
+- stage: DeployToProduction
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment: production
+    displayName: Deploy to Production
+    environment:
+      name: Production
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: CmdLine@2
+            displayName: Stop Current Container
+            inputs:
+              script: 'docker rm -f  bootapp || true'
+          - task: Docker@2
+            displayName: 'Login to Registry'
+            inputs:
+              containerRegistry: $(dockerRegistryServiceConnection)
+              command: 'login'
 
-#           - task: CmdLine@2
-#             displayName: Pull image
-#             inputs:
-#               script: 'docker pull $(containerRegistry)/$(imageRepository):$(tag)'
+          - task: CmdLine@2
+            displayName: Pull image
+            inputs:
+              script: 'docker pull $(containerRegistry)/$(imageRepository):$(tag)'
 
       
-#           - task: Bash@3
-#             inputs:
-#              targetType: 'inline'
-#              script: 'docker run --restart=always  -d --name bootapp -p 8080:8080 -e PGHOST=$(PGHOSTT)   -e PORT=8080    -e  HOST=0.0.0.0  -e PGUSERNAME=$(PGUSERNAMEE)  -e PGDATABASE=postgres   -e  PGPASSWORD=$(PGPASSWORD)  -e  PGPORT=5432   -e HOST_URLL=$(HOST_URLL)   -e COOKIE_ENCRYPT_PWD=$(COOKIE_ENCRYPT_PWD)   -e  NODE_ENV=development   -e  OKTA_ORG_URL=$(OKTA_ORG_URL)   -e  OKTA_CLIENT_ID=$(OKTA_CLIENT_ID)   -e OKTA_CLIENT_SECRET=$(OKTA_CLIENT_SECRET)  $(containerRegistry)/$(imageRepository):$(tag)'
+          - task: Bash@3
+            inputs:
+             targetType: 'inline'
+             script: 'docker run --restart=always  -d --name bootapp -p 8080:8080 -e PGHOST=$(PGHOSTT)   -e PORT=8080    -e  HOST=0.0.0.0  -e PGUSERNAME=$(PGUSERNAMEE)  -e PGDATABASE=postgres   -e  PGPASSWORD=$(PGPASSWORD)  -e  PGPORT=5432   -e HOST_URLL=$(HOST_URLL)   -e COOKIE_ENCRYPT_PWD=$(COOKIE_ENCRYPT_PWD)   -e  NODE_ENV=development   -e  OKTA_ORG_URL=$(OKTA_ORG_URL)   -e  OKTA_CLIENT_ID=$(OKTA_CLIENT_ID)   -e OKTA_CLIENT_SECRET=$(OKTA_CLIENT_SECRET)  $(containerRegistry)/$(imageRepository):$(tag)'
