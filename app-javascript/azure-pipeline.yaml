@@ -1,0 +1,111 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '******************************'
+  imageRepository: 'dockercicd'
+  containerRegistry: 'docker1container.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/app-javascript/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: stagingagebt
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+ # CD staging
+- stage: DeployToStaging
+  #condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment: staging
+    displayName: Deploy to Staging
+    environment:
+      name: staging
+      resourceType: VirtualMachine
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: CmdLine@2
+            displayName: Stop Current Container
+            inputs:
+              script: 'docker rm -f  bootapp || true'
+          - task: Docker@2
+            displayName: 'Login to Registry'
+            inputs:
+              containerRegistry: $(dockerRegistryServiceConnection)
+              command: 'login'
+
+          - task: CmdLine@2
+            displayName: Pull image
+            inputs:
+              script: 'docker pull $(containerRegistry)/$(imageRepository):$(tag)'
+
+      
+
+          - task: Bash@3
+            inputs:
+             targetType: 'inline'
+             script: 'docker run --restart=always  -d --name bootapp -p 8080:8080 -e PGHOST=$(PGHOST)   -e PORT=8080    -e  HOST=0.0.0.0  -e PGUSERNAME=$(PGUSERNAME)  -e PGDATABASE=postgres   -e  PGPASSWORD=$(PGPASSWORD)  -e  PGPORT=5432   -e HOST_URLL=$(HOST_URL)   -e COOKIE_ENCRYPT_PWD=$(COOKIE_ENCRYPT_PWD)   -e  NODE_ENV=development   -e  OKTA_ORG_URL=$(OKTA_ORG_URL)   -e  OKTA_CLIENT_ID=$(OKTA_CLIENT_ID)   -e OKTA_CLIENT_SECRET=$(OKTA_CLIENT_SECRET)  $(containerRegistry)/$(imageRepository):$(tag)'
+
+
+
+# # # CD prod
+# - stage: DeployToProduction
+#   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+#   jobs:
+#   - deployment: production
+#     displayName: Deploy to Production
+#     environment:
+#       name: Production
+#       resourceType: VirtualMachine
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#           - task: CmdLine@2
+#             displayName: Stop Current Container
+#             inputs:
+#               script: 'docker rm -f  bootapp || true'
+#           - task: Docker@2
+#             displayName: 'Login to Registry'
+#             inputs:
+#               containerRegistry: $(dockerRegistryServiceConnection)
+#               command: 'login'
+
+#           - task: CmdLine@2
+#             displayName: Pull image
+#             inputs:
+#               script: 'docker pull $(containerRegistry)/$(imageRepository):$(tag)'
+
+      
+#           - task: Bash@3
+#             inputs:
+#              targetType: 'inline'
+#              script: 'docker run --restart=always  -d --name bootapp -p 8080:8080 -e PGHOST=$(PGHOSTT)   -e PORT=8080    -e  HOST=0.0.0.0  -e PGUSERNAME=$(PGUSERNAMEE)  -e PGDATABASE=postgres   -e  PGPASSWORD=$(PGPASSWORD)  -e  PGPORT=5432   -e HOST_URLL=$(HOST_URLL)   -e COOKIE_ENCRYPT_PWD=$(COOKIE_ENCRYPT_PWD)   -e  NODE_ENV=development   -e  OKTA_ORG_URL=$(OKTA_ORG_URL)   -e  OKTA_CLIENT_ID=$(OKTA_CLIENT_ID)   -e OKTA_CLIENT_SECRET=$(OKTA_CLIENT_SECRET)  $(containerRegistry)/$(imageRepository):$(tag)'
